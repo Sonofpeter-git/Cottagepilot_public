@@ -1,0 +1,38 @@
+# Use official Python image as base
+FROM python:3.10-slim
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies and supervisor
+RUN apt-get update && apt-get install -y \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
+    chromium \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install python dependencies
+COPY ./requirements.txt /app/
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+
+# Copy project
+COPY ./ /app/
+
+# Copy supervisor config file (you'll create this file next)
+COPY ./supervisord.dev.conf /etc/supervisor/conf.d/supervisord.dev.conf
+
+# Copy cron loop script and make it executable
+COPY run_crons_loop.sh /app/
+RUN chmod +x /app/run_crons_loop.sh
+
+# Expose port 8000 for Django
+EXPOSE 8000
+
+# Run supervisor, which will manage Django and cron tasks
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.dev.conf"]

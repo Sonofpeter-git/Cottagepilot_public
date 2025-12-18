@@ -1,0 +1,87 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --primary-bg: linear-gradient(135deg, #ffffff 0%, #2200ff 100%);
+
+  --Title-font: 2rem;
+  --Header-font: 1rem;
+  --Content-font: 1rem;
+
+
+  /*Brand colors*/
+  --primary-color: #37c0bb;
+  --secondary-color: #003b3c;
+  --popUpBg: #cfe5e4;
+  --popUpForpopUpBg: rgba(0, 0, 0, 0.082);
+  --highligh-color: #c77b92;
+  --extra-neutral-color: #b8cecd;
+
+  --select_bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --border-color: rgba(56, 129, 255, 0.388);
+  --hover-color: rgba(255, 255, 255, 0.1);
+  --first-row: rgba(255, 255, 255, 0.2);
+  --danger-color: rgb(211, 40, 40);
+
+
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffffff 20%, #e7ddff 100%);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.primary-bg {
+  background-color: var(--primary-bg);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sensor-card {
+  transition: all 0.3s ease;
+  transform: translateY(0);
+}
+
+.sensor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 300px;
+  }
+}

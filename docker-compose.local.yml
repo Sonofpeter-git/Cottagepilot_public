@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend/style.css:/app/style.css
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/src/:/app/src/
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+
+networks:
+  cottagepilot:
+
+volumes:
+  pgdata:

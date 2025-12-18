@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Cottage Invitation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #1a202c; /* dark slate */
+      line-height: 1.5;
+      background-color: #f0f4f8;
+      padding: 20px 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+      border: 1px solid #e2e8f0;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(26, 32, 44, 0.1);
+    }
+    h2 {
+      color: #003b3c; /* blue */
+      margin-bottom: 20px;
+    }
+    a.button {
+      display: inline-block;
+      background-color: #003b3c;
+      color: white !important;
+      padding: 12px 25px;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-top: 25px;
+      font-weight: bold;
+    }
+    p {
+      margin-bottom: 1em;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>You've Been Invited to Join a Cottage on CottagePilot!</h2>
+    <p>Hi {{ user_name }},</p>
+    <p>You have been invited to join the cottage <strong>"{{ cottage_name }}"</strong> on CottagePilot, your smart platform to manage and share your cottages effortlessly.</p>
+    <p>To get started, please log in to your account and access your cottage dashboard to explore all features and collaborate seamlessly.</p>
+    <a href="{{ login_url }}" class="button">Login Here</a>
+    <p>If you have any questions or need help, feel free to contact us anytime.</p>
+    <p>We look forward to welcoming you onboard!</p>
+    <p>Best regards,<br/>The CottagePilot Team</p>
+  </div>
+</body>
+</html>

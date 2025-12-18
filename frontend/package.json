@@ -1,0 +1,38 @@
+{
+  "name": "iot-sensor-platform",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "23": "^0.0.0",
+    "@fullcalendar/core": "^6.1.18",
+    "@fullcalendar/daygrid": "^6.1.18",
+    "@fullcalendar/interaction": "^6.1.18",
+    "@fullcalendar/vue3": "^6.1.18",
+    "@headlessui/vue": "^1.7.16",
+    "@heroicons/vue": "^2.0.18",
+    "axios": "^1.11.0",
+    "chart.js": "^4.4.0",
+    "date-fns": "^2.30.0",
+    "pinia": "^2.1.7",
+    "tailwindcss": "^3.3.6",
+    "vue": "^3.5.16",
+    "vue-chartjs": "^5.2.0",
+    "vue-router": "^4.2.5",
+    "yarn": "^1.22.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0-beta.2",
+    "@vue/tsconfig": "^0.7.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vue-tsc": "^2.2.10"
+  }
+}
