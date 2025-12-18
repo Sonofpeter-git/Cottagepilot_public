@@ -1,187 +1,81 @@
-# SensorHub - IoT Sensor Management Platform
+# CottagePilot 🏠
 
-A comprehensive IoT sensor management platform built with Vue.js, Django, and MongoDB. Monitor, analyze, and manage your sensor network with real-time data visualization and advanced analytics.
+**A full-stack cottage management ecosystem integrating IoT monitoring, automated maintenance, and collaborative scheduling.**
 
-## Features
+CottagePilot was developed to solve a universal problem for shared property owners: the "nagging" friction of maintenance and the lack of transparency in property upkeep. This platform replaces subjective memory with objective data and automated workflows.
 
-### Frontend (Vue.js + TypeScript)
-- **Modern UI/UX**: Beautiful, responsive design with Tailwind CSS
-- **Real-time Monitoring**: Live sensor data updates and visualization
-- **Interactive Dashboards**: Customizable charts and analytics
-- **Sensor Management**: Add, edit, delete, and configure sensors
-- **Data Visualization**: Advanced charts with Chart.js integration
-- **Mobile Responsive**: Works seamlessly on all devices
 
-### Backend (Django + MongoDB)
-- **RESTful API**: Comprehensive API for sensor and data management
-- **MongoDB Integration**: Scalable NoSQL database for sensor data
-- **Real-time Processing**: Background tasks with Celery
-- **Advanced Analytics**: AI-powered insights and trend analysis
-- **Alert System**: Configurable alerts and notifications
-- **User Authentication**: Secure user management and permissions
 
-## Tech Stack
+---
 
-### Frontend
-- Vue 3 with Composition API
-- TypeScript for type safety
-- Tailwind CSS for styling
-- Pinia for state management
-- Vue Router for navigation
-- Chart.js for data visualization
-- Axios for API communication
+## 🚀 Overview
 
-### Backend
-- Django 4.2 with Django REST Framework
-- MongoDB with Djongo ORM
-- Celery for background tasks
-- Redis for caching and task queue
-- JWT authentication
-- Comprehensive API documentation
+CottagePilot is a proactive property management tool that bridges the gap between physical property health and human coordination.
 
-## Quick Start
+* **The Problem:** Maintenance tasks were often forgotten, responsibility was unclear, and environmental risks (like pipe bursts or mold) were only discovered after the damage was done.
+* **The Solution:** A centralized hub where maintenance is triggered by real-time sensor data or pre-defined annual schedules, with an automated "enforcer" system to handle reminders.
+* **The Goal:** A scalable SaaS product capable of handling multi-tenant cottage ownership.
 
-### Prerequisites
-- Node.js 18+ and npm
-- Python 3.9+
-- MongoDB 5.0+
-- Redis 6.0+
+---
 
-### Frontend Setup
-```bash
-# Install dependencies
-npm install
+## 🛠️ Tech Stack
 
-# Start development server
-npm run dev
-```
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | Vue.js 3, TypeScript, Tailwind CSS |
+| **Backend** | Django, Django REST Framework (DRF), PostgreSQL |
+| **IoT / Hardware** | ESP32 Microcontrollers, REST API (HTTP POST), C++/Arduino |
+| **DevOps** | Docker, Docker Compose, Nginx |
+| **SaaS Features** | Stripe Integration, Multi-tenant Authentication |
 
-### Backend Setup
-```bash
-# Navigate to backend directory
-cd backend
+---
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+## ✨ Key Features
 
-# Install dependencies
-pip install -r requirements.txt
+### 1. IoT Environmental Monitoring
+The system integrates custom **ESP32 sensors** to monitor the property's vitals.
+* **Real-time Telemetry:** Sensors report temperature and humidity every 5–15 minutes.
+* **Automated Task Triggers:** If sensors detect threshold violations (e.g., freezing temperatures in winter), the backend automatically generates high-priority maintenance tasks.
+* **Power Optimization:** Logic varies reporting frequency based on whether the unit is battery-powered or USB-C powered.
 
-# Copy environment file
-cp .env.example .env
+### 2. Automated Maintenance Logic
+* **Objective Accountability:** Tasks are defined at the start of the season. If a task becomes overdue, the system sends automated email alerts to all owners. Removing the social awkwardness of one person having to "nag" others.
+* **Priority Ranking:** Visual indicators for urgent vs. routine maintenance.
 
-# Run migrations
-python manage.py migrate
+### 3. Collaborative Tools
+* **Booking Calendar:** A conflict-free scheduling system for cottage visits.
+* **The Leaderboard:** A social element featuring "biggest fish" tracking and shared grocery/repair notes to keep the family engaged.
 
-# Create superuser
-python manage.py createsuperuser
+### 4. SaaS Infrastructure
+* **Multi-tenancy:** Architected to support multiple separate cottage groups.
+* **Payment Gateway:** Integrated **Stripe** for handling subscription-based access.
 
-# Start development server
-python manage.py runserver
-```
+---
 
-### Database Setup
-1. Install and start MongoDB
-2. Install and start Redis
-3. Update `.env` file with your database credentials
+## 📂 Project Structure
 
-## API Endpoints
-
-### Sensors
-- `GET /api/sensors/` - List all sensors
-- `POST /api/sensors/` - Create new sensor
-- `GET /api/sensors/{id}/` - Get sensor details
-- `PUT /api/sensors/{id}/` - Update sensor
-- `DELETE /api/sensors/{id}/` - Delete sensor
-- `GET /api/sensors/{id}/data/` - Get sensor data
-- `POST /api/sensors/{id}/add_data/` - Add sensor data
-
-### Analytics
-- `GET /api/analytics/reports/` - List analytics reports
-- `GET /api/analytics/insights/` - Get sensor insights
-- `POST /api/analytics/insights/generate_insights/` - Generate new insights
-
-## Project Structure
-
-```
-sensorhub/
-├── src/                    # Frontend source code
-│   ├── components/         # Vue components
-│   ├── views/             # Page components
-│   ├── stores/            # Pinia stores
-│   ├── services/          # API services
-│   ├── types/             # TypeScript types
-│   └── router/            # Vue Router configuration
-├── backend/               # Django backend
-│   ├── sensorhub/         # Main Django project
-│   ├── sensors/           # Sensors app
-│   ├── analytics/         # Analytics app
-│   └── requirements.txt   # Python dependencies
+```text
+COTTAGEPILOT_PUBLIC/
+├── backend/                # Django REST Framework Root
+│   ├── accounts/           # User authentication and profile management
+│   ├── analytics/          # Data processing and usage insights
+│   ├── calendarApp/        # Cottage visit scheduling logic
+│   ├── cottageInstance/    # Multi-tenant property models
+│   ├── notes/              # Shared notes and leaderboard system
+│   ├── sensorhub/          # Django root folder
+│   ├── sensors/            # Individual sensor configurations
+│   ├── stripeApp/          # Subscription and payment integration
+│   ├── tasks/              # Automated alerting, task scheduling and maintenance logic
+│   ├── celery_app.py       # Asynchronous task queue configuration
+│   ├── supervisord.conf    # Process control system configuration
+│   └── manage.py           # Django CLI
+├── esp_sensors/            # ESP32 firmware (C++ / Arduino / MicroPython)
+├── frontend/               # Vue.js 3 + TypeScript source
+│   ├── src/                # Component and view logic
+│   ├── public/             # Static assets
+│   ├── tailwind.config.js  # Styling configuration
+│   ├── vite.config.ts      # Build tool configuration
+│   └── package.json        # Frontend dependencies
+├── nginx/                  # Web server and reverse proxy configuration
+├── docker-compose.local.yml # Local orchestration configuration
 └── README.md
-```
-
-## Key Features
-
-### Sensor Management
-- Add sensors with various types (temperature, humidity, pressure, etc.)
-- Real-time status monitoring
-- Bulk operations and filtering
-- Location-based organization
-
-### Data Visualization
-- Interactive charts and graphs
-- Historical data analysis
-- Real-time updates
-- Customizable time ranges
-
-### Analytics & Insights
-- Trend analysis
-- Anomaly detection
-- Predictive analytics
-- Custom reports
-
-### Alert System
-- Threshold-based alerts
-- Real-time notifications
-- Multiple severity levels
-- Alert history and management
-
-## Deployment
-
-### Frontend (Netlify/Vercel)
-```bash
-npm run build
-# Deploy dist/ folder to your hosting provider
-```
-
-### Backend (Production)
-```bash
-# Install production dependencies
-pip install gunicorn
-
-# Collect static files
-python manage.py collectstatic
-
-# Run with Gunicorn
-gunicorn sensorhub.wsgi:application
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For support and questions:
-- Email: support@sensorhub.com
-- Documentation: [docs.sensorhub.com](https://docs.sensorhub.com)
-- Issues: [GitHub Issues](https://github.com/sensorhub/issues)
