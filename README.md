@@ -136,8 +136,8 @@ COTTAGEPILOT_ROOT/
 
 3.   **Configuration:**
    *    In backend container run:
-    python manage.py migrate
-    python manage.py createsuperuser
+    *    python manage.py migrate
+    *    python manage.py createsuperuser
 
     *    Then navigate to http://localhost:8000/backend/admin and signin
     *    Go to Cottage instance models and create a cottage instance and add your admin user as a CottageUser (put "-" in stripe fields, but check the "Stripe payment status box"
