@@ -133,7 +133,23 @@ COTTAGEPILOT_ROOT/
     ```bash
     docker compose -f docker-compose.local.yml up --build
     ```
-3.  **Access:**
+
+3.   **Configuration:**
+   *    In backend container run:
+   ```bash
+    python manage.py migrate
+    ```
+    *    And
+    ```bash
+    python manage.py createsuperuser
+    ```
+    *    Then navigate to http://localhost:8000/backend/admin and signin
+    *    Go to Cottage instance models and create a cottage instance and add your admin user as a CottageUser (put "-" in stripe fields, but check the "Stripe payment status box"
+    *
+    *    Now you are ready to signin:
+    *    Navigate to http://localhost:8080 and signin
+    *    If you prefer to add simulated sensors it can be done through the admin panel at http://localhost:8000/backend/admin
+4.  **Access:**
     *   Frontend: `http://localhost:8080`
     *   API / Admin: `http://localhost:8000`
 
