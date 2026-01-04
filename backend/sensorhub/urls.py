@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import healtCheck, makePwd
+from .views import healtCheck
 
 
 urlpatterns = [
@@ -17,7 +17,6 @@ urlpatterns = [
     path('analytics/', include('analytics.urls')),
     path('health/', healtCheck, name="healtCheck"),
     path('', healtCheck, name="healtCheck"),
-    path('makePWD/', makePwd, name="makePwd"),
 ]
 
 if settings.DEBUG:
