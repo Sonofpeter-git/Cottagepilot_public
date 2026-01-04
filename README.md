@@ -18,8 +18,9 @@ CottagePilot is a proactive property management tool that bridges the gap betwee
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech
 
+**##Tech Stach**
 | Layer | Technologies |
 | :--- | :--- |
 | **Frontend** | Vue.js 3, TypeScript, Tailwind CSS |
@@ -27,6 +28,35 @@ CottagePilot is a proactive property management tool that bridges the gap betwee
 | **IoT / Hardware** | ESP32 Microcontrollers, REST API (HTTP POST), C++/Arduino |
 | **DevOps** | Docker, Docker Compose, Nginx |
 | **SaaS Features** | Stripe Integration, Multi-tenant Authentication |
+
+## Sensor Data Flow
+
+The platform uses a robust, real-time data pipeline to ensure sensor readings are accurate, persistent, and instantly visible to users.
+
+### Data Journey
+1.  **Detection**: IoT sensors (e.g., ESP8266) read physical data (Temperature, Humidity).
+2.  **Transmission**: Sensors publish encrypted JSON payloads to the **MQTT Broker** (Mosquitto).
+3.  **Ingestion**: A Python **Bridge** service subscribes to MQTT and pushes raw data into a **Redis** queue.
+4.  **Processing**: **Celery Workers** pick up batched data from Redis, validate it, provision new sensors (if needed), and bulk-save to **PostgreSQL**.
+5.  **Real-Time Push**: Upon saving, a background task broadcasts the new data via **Django Channels** (WebSockets) to the specific cottage's group.
+6.  **Visualization**: The Vue.js Frontend receives the WebSocket message and instantly updates the live line charts without a page reload.
+
+### Architecture Diagram
+
+```mermaid
+graph LR
+    S[Sensor Node] -->|MQTT| MB(MQTT Broker)
+    MB -->|Sub| BR[Bridge Service]
+    BR -->|Push| RQ[(Redis Queue)]
+    RQ -->|Pull| CW[Celery Worker]
+    CW -->|Bulk Save| DB[(PostgreSQL)]
+    CW -.->|Broadcast| CL[Channel Layer]
+    CL -->|WebSocket| FE[Frontend Vue.js]
+    
+    style S fill:#f9f,stroke:#333,stroke-width:2px
+    style FE fill:#bbf,stroke:#333,stroke-width:2px
+```
+
 
 ---
 
