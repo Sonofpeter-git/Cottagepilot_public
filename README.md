@@ -136,6 +136,7 @@ COTTAGEPILOT_ROOT/
 
 3.   **Configuration:**
    *    In backend container run:
+     
     *    python manage.py migrate
     *    python manage.py createsuperuser
 
