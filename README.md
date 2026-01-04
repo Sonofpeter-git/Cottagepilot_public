@@ -140,7 +140,7 @@ COTTAGEPILOT_ROOT/
     python manage.py migrate
     ```
 ---
-    *    And
+    **Configuration:**
     ```bash
     python manage.py createsuperuser
     ```
