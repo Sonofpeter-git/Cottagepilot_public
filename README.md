@@ -1,4 +1,4 @@
-**# CottagePilot 🏠
+## 🏠 CottagePilot
 
 **A full-stack cottage management ecosystem integrating IoT monitoring, automated maintenance, and collaborative scheduling.**
 
