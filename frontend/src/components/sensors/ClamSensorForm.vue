@@ -41,7 +41,6 @@ const onSaved = () => {
 }
 
 onMounted(async () => {
-  console.log("in add")
 })
 </script>
 

@@ -11,6 +11,6 @@
     "allowJs": true,
     "checkJs": false,
     "moduleResolution": "node",
-    "types": ["node"],
+    "types": ["vite/client"],
   }
 }

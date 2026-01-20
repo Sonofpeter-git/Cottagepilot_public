@@ -3,7 +3,6 @@ import uuid
 
 # Create your models here.
 class CottageInstanceModel(models.Model):
-    #id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=100)
     owner = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='CottageMasterModelOwner', blank=True, null=True)
     address = models.CharField(max_length=100)

@@ -155,5 +155,3 @@ export interface Cottage {
 export interface cottagePaymentLink {
   payment_link:string,
 }
-
-

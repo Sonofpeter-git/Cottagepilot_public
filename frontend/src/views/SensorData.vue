@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSensorStore } from '../stores/sensors'
+import { useAccountStore } from '../stores/account'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -16,6 +17,8 @@ import {
 } from 'chart.js'
 import { format } from 'date-fns'
 
+import type { WSMessage} from '../types/websocket';
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -29,6 +32,7 @@ ChartJS.register(
 
 const route = useRoute()
 const sensorStore = useSensorStore()
+const accountStore = useAccountStore()
 const selectedSensorId = ref(route.params.id as string || '')
 const timeRange = ref('24h')
 
@@ -105,6 +109,51 @@ const chartOptions = computed(() => ({
   }
 }))
 
+
+
+// 1. Separate reactive states for different data streams
+const isConnected = ref(false);
+
+let socket: WebSocket | null = null;
+
+const handleMessage = (event: MessageEvent) => {
+    const data = JSON.parse(event.data) as WSMessage;
+
+    // 2. The Router: TypeScript now provides autocomplete for 'payload' 
+    // based on which 'case' you are in!
+    switch (data.type) {
+        case 'sensor_update':
+          console.log("Received sensor update via WebSocket:", data.payload);
+          console.log("Selected Sensor ID:", selectedSensorId.value);
+          if (data.payload.sensor_id === selectedSensorId.value) {
+            sensorStore.sensorData.unshift(data.payload);
+          }
+          break;
+            
+        case 'task_update':
+            break;
+
+        case 'note_update':
+            break;
+
+        default:
+            console.warn('Unknown message type received');
+    }
+};
+
+const connect = () => {
+    socket = new WebSocket(`wss://cloud.cottagepilot.fi/ws/unified/${accountStore.account?.access_to_cottage}/`);
+    socket.onopen = () => isConnected.value = true;
+    console.log('WebSocket connected🚀 ' + accountStore.account?.access_to_cottage);
+    socket.onmessage = handleMessage;
+    socket.onclose = () => {
+        isConnected.value = false;
+        setTimeout(connect, 3000); // Reconnect logic
+    };
+};
+
+
+
 const stats = computed(() => {
   if (!sensorStore.sensorData.length) return null
 
@@ -125,13 +174,19 @@ const fetchData = async () => {
 watch([selectedSensorId, timeRange], fetchData)
 
 onMounted(async () => {
+  await accountStore.fetchAccount()
   await sensorStore.loadSensorsFromLocalStorage()
   await sensorStore.loadSensorDataFromLocalStorage()
   sensorStore.fetchSensors()
   if (selectedSensorId.value) {
     fetchData()
   }
+  connect()
 })
+
+
+onUnmounted(() => socket?.close());
+
 </script>
 
 <template>

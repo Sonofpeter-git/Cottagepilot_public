@@ -1,40 +1,28 @@
-# Use official Python image as base
 FROM python:3.10-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (Removed supervisor)
 RUN apt-get update && apt-get install -y \
     gcc \
+    libpq-dev \
     pkg-config \
-    chromium \
-    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install python dependencies
-COPY ./backend/requirements.txt /app/
+# Install python dependencies
+COPY ./requirements.txt /app/
 RUN pip install --upgrade pip
-#RUN --mount=type=cache,id=cottagepilot-pip,target=/root/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
-RUN pip install -r requirements.txt
-
-# Copy project files
-COPY ./backend/ /app/
-
-# Copy supervisord config file
-COPY ./backend/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Copy project
+COPY ./ /app/
 
 # Copy cron loop script and make it executable
-COPY ./backend/run_crons_loop.sh /app/
+COPY run_crons_loop.sh /app/
 RUN chmod +x /app/run_crons_loop.sh
 
-# Expose port 8000
 EXPOSE 8000
 
-# Start supervisord which runs gunicorn and runcrons
-#CMD ["supervisord", "-n"]
+# Default command (can be overridden by docker-compose)
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "sensorhub.asgi:application"]

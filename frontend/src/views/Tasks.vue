@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useTaskStore } from '../stores/tasks'
 import { useSensorStore } from '../stores/sensors'
+import { useAccountStore } from '../stores/account'
 import { useRouter } from 'vue-router'
 import type {Task} from '../types/index.ts'
 
+import type { WSMessage} from '../types/websocket';
 
 const taskStore = useTaskStore()
 const sensorStore = useSensorStore()
+const accountStore = useAccountStore()
+
 const MonthFilterActive = ref(false)
 const StatusFilterActive = ref(false)
 const SensorFilterActive = ref(false)
@@ -133,16 +137,72 @@ const addTask = async () => {
   }
 }
 
+// 1. Separate reactive states for different data streams
+const isConnected = ref(false);
+
+let socket: WebSocket | null = null;
+
+const handleMessage = (event: MessageEvent) => {
+    const data = JSON.parse(event.data) as WSMessage;
+
+    // 2. The Router: TypeScript now provides autocomplete for 'payload' 
+    // based on which 'case' you are in!
+    switch (data.type) {
+        case 'sensor_update':
+          break;
+            
+        case 'task_update':
+            // Update or add the task to our record/dictionary
+            console.log('Received task update:', data.payload);
+            if (!data.payload || !data.payload.id) {
+                console.warn('Received task update with missing payload or id');
+                return;
+            }
+
+            if (taskStore.tasks.some(task => task.id === data.payload.id)) {
+                // Update existing task
+                const index = taskStore.tasks.findIndex(task => task.id === data.payload.id);
+                taskStore.tasks[index] = { ...(data.payload) as Task };
+            } else {
+                // Add new task
+                taskStore.tasks.unshift((data.payload) as Task);
+            }
+            break;
+
+        default:
+            console.warn('Unknown message type received');
+    }
+};
+
+const connect = () => {
+    socket = new WebSocket(`wss://cloud.cottagepilot.fi/ws/unified/${accountStore.account?.access_to_cottage}/`);
+    socket.onopen = () => isConnected.value = true;
+    console.log('WebSocket connected🚀 ' + accountStore.account?.access_to_cottage);
+    socket.onmessage = handleMessage;
+    socket.onclose = () => {
+        isConnected.value = false;
+        setTimeout(connect, 3000); // Reconnect logic
+    };
+};
+
 const cancelAdd = () => {
   showAddForm.value = false
 }
 
 onMounted(async () => {
+  await accountStore.fetchAccount()
   await taskStore.fetchTasks()
   tasks.value = taskStore.tasks
   await sensorStore.fetchSensors()
-  console.log(taskStore.tasks)
+  connect()
 })
+
+onUnmounted(() => {
+    if (socket) {
+        socket.close();
+    }
+  }
+);
 </script>
 
 <style scoped>

@@ -1,19 +1,15 @@
 from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-
-
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import now
-from django.http import JsonResponse
+
 
 from .models import Sensor, SensorData, SensorAlert
 from .serializers import (
@@ -21,10 +17,20 @@ from .serializers import (
     SensorAlertSerializer, SensorStatsSerializer)
 
 from .filters import SensorFilter, SensorDataFilter
+from django.utils.timezone import now
+
+from django.http import JsonResponse
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+
+#Websocket imports
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 
 #import task model
 from tasks.models import Task
-
 import secrets
 
 @authentication_classes([TokenAuthentication])
@@ -57,58 +63,6 @@ class SensorViewSet(viewsets.ModelViewSet):
         else:
             return super().get_permissions()
     
-        
-    
-    @action(detail=False, methods=['post'])
-    @csrf_exempt
-    def create_sensor(self, request, *args, **kwargs):
-        try:
-            postData_sensors = request.data["sensors"]
-            sensor_code = request.data.get('code','')
-            if request.data.get('code','') == "nan":
-                #loop 50 and break if unique code is found else return error
-                for _ in range(50):
-                    sensor_code = format(secrets.randbits(32), '08x')
-                    if not Sensor.objects.filter(code=sensor_code).exists():
-                        break
-            
-                if Sensor.objects.filter(code=sensor_code).exists():
-                    return Response({'status': 'failed', 'message': 'Could not generate unique sensor code'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-                    
-            for index in range(0,len(postData_sensors)):
-                if not postData_sensors[index].get("sensor_id"):
-                    return Response({'status': 'failed', 'message': f'Missing field: {postData_sensors} or missing code'},
-                                    status=status.HTTP_400_BAD_REQUEST)
-                
-                sensor_obj = Sensor.objects.filter(sensor_id=postData_sensors[index].get("sensor_id"), code=sensor_code).first()
-                
-                if sensor_obj:
-                    sensor_data = SensorData.objects.create(value=postData_sensors[index].get("sensor_data"), sensor=sensor_obj)
-                    sensor_data.full_clean()
-                    sensor_data.save()
-                    self.check_limit(sensor_obj, postData_sensors[index].get("sensor_data"))
-                
-                else:
-                    try:
-                        sensor = Sensor.objects.create(
-                            sensor_id=postData_sensors[index].get("sensor_id"),
-                            code=sensor_code
-                        )
-                        print(sensor)
-                        sensor.full_clean()
-                        sensor.save()
-                    except Exception as e:
-                        print(e)
-                        return Response({'status': 'An error occurred while creating new sensor.', 'errors': sensor.errors}, status=status.HTTP_400_BAD_REQUEST)
-                    
-            return Response({'status' : 'success', 'code':sensor_code}
-                                    ,status=status.HTTP_200_OK)
-        except Exception as e:
-            print(e)
-            return Response({'status': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-
     @action(detail=False, methods=['post'])
     def claim_sensor(self, request, *args, **kwargs):
             sensor_id = request.data['sensor_id']
@@ -198,7 +152,6 @@ class SensorViewSet(viewsets.ModelViewSet):
         if not sensor:
             return Response({'status': 'failed', 'errors': 'Sensor not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        #serializer = SensorDataCreateSerializer(data=data)
         try:
             sensor_data = SensorData.objects.create(value=data['value'], sensor=sensor)
             sensor_data.full_clean()
@@ -209,12 +162,6 @@ class SensorViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'status': 'failed', 'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
-        #return Response({
-        #    'status': 'success',
-        #    'task_id': task.id,
-        #    'message': 'Sensor data is being processed asynchronously.'
-        #}, status=status.HTTP_202_ACCEPTED)
     
 
     def check_limit(self, sensor, value):

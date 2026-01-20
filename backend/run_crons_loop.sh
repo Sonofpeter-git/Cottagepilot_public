@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 while true; do
     echo "Running Django cron jobs at $(date)"
     python manage.py runcrons

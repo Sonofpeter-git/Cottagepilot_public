@@ -1,8 +1,9 @@
-import axios, { AxiosResponse, AxiosError } from 'axios'
-import type { Sensor, SensorData, ApiResponse, Task, LoginResponse, Account, Note, Reservation, Cottage, cottagePaymentLink} from '../types'
+import axios, { AxiosError } from 'axios'
+import type { Sensor, SensorData, ApiResponse, Task, LoginResponse, Account, Note, Reservation, Cottage, cottagePaymentLink } from '../types'
 import { useAccountStore } from '../stores/account'
+import router from '../router'
 
-const API_BASE_URL = "https://cottagepilot-production.up.railway.app/"//"http://localhost:8000/"// 
+const API_BASE_URL = "https://cloud.cottagepilot.fi/api"
 
 
 export const api = axios.create({
@@ -16,7 +17,7 @@ export const api = axios.create({
 
 // Add a request interceptor
 api.interceptors.request.use((config) => {
-  const accountStore = useAccountStore(); // Call inside interceptor (after Pinia is ready)
+  const accountStore = useAccountStore();
   const token = accountStore.authToken || localStorage.getItem('auth_token');
   if (token) {
     config.headers['Authorization'] = `Token ${token}`;
@@ -32,23 +33,38 @@ api.interceptors.request.use((config) => {
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    if (error.response) {
-      if (error.response.status === 401) {
-        const accountsStore = useAccountStore()
-        accountsStore.logout()
-        window.location.href = '/login'
-      }
-      //Access error message
-      const data = error.response.data as { message?: string }
-      const message = data?.message || 'An error occurred'
-      
-      return Promise.reject(new Error(message))
+  (response) => response,
+  async (error: AxiosError) => {
+    // 1. Handle network errors (no response from server)
+    if (!error.response) {
+      console.error('Network Error:', error.message);
+      return Promise.reject(error);
     }
-    return Promise.reject(error)
+
+    const { status, data } = error.response;
+    const accountsStore = useAccountStore();
+
+    // 2. Handle Unauthorized (401)
+    if (status === 401) {
+      // Clear local storage/state
+      accountsStore.logout();
+
+      // Redirect using router to maintain SPA state
+      if (router.currentRoute.value.name !== 'login') {
+        router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } });
+      }
+    }
+
+    // 3. Extract the message properly from Django's format
+    const errorData = data as { message?: string; detail?: string; error?: string };
+    const errorMessage = errorData.message || errorData.detail || errorData.error || 'An unexpected error occurred';
+
+    // 4. Overwrite the message but keep the Axios structure
+    error.message = errorMessage;
+
+    return Promise.reject(error);
   }
-)
+);
 
 export const sensorService = {
   async getSensors(): Promise<Sensor[]> {
@@ -104,8 +120,8 @@ export const taskService = {
     return response.data.results
   },
 
-  async markTaskDone(id: string){
-    api.post<ApiResponse<Task>>(`/task/${id}/mark_done/`)
+  async markTaskDone(id: string) {
+    await api.post<ApiResponse<Task>>(`/task/${id}/mark_done/`)
   },
 
 
@@ -118,19 +134,19 @@ export const taskService = {
     return response.data.results
   },
 }
- 
+
 //Account service
 export const accountService = {
-  async get_csrf(): Promise<string>{
-    const response = await api.get<{csrfToken: string}>('csrf/')
+  async get_csrf(): Promise<string> {
+    const response = await api.get<{ csrfToken: string }>('csrf/')
     const token = response.data.csrfToken
     // Manually set CSRF token header for future POSTs
     api.defaults.headers.common['X-CSRFToken'] = token
     return token
   },
 
-  async login(username: string, password:string): Promise<LoginResponse> {
-    const response = await api.post<LoginResponse>('/login/', {username, password})
+  async login(username: string, password: string): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>('/login/', { username, password })
     return response.data
   },
 
@@ -146,7 +162,7 @@ export const accountService = {
     return response.data.results
   },
 
-  async updateAccount(updates: Partial<Account>): Promise<Account>{
+  async updateAccount(updates: Partial<Account>): Promise<Account> {
     const response = await api.post<ApiResponse<Account>>('/account/me/', updates);
     return response.data.results
   },
@@ -154,8 +170,8 @@ export const accountService = {
 
 //CottageCreate
 export const cottageService = {
-   async getCottagePaymentLink(name: string, address:string, plan:string): Promise<cottagePaymentLink> {
-    const response = await api.post<ApiResponse<cottagePaymentLink>>('/cottage/create-cottage-subscription/', {name, address, stripe_subscription: plan})
+  async getCottagePaymentLink(name: string, address: string, plan: string): Promise<cottagePaymentLink> {
+    const response = await api.post<ApiResponse<cottagePaymentLink>>('/cottage/create-cottage-subscription/', { name, address, stripe_subscription: plan })
     return response.data.results
   },
 
@@ -164,7 +180,7 @@ export const cottageService = {
     return response.data.results
   },
 
-  async updateCottage(updates: Partial<Cottage>): Promise<Cottage>{
+  async updateCottage(updates: Partial<Cottage>): Promise<Cottage> {
     const response = await api.post<ApiResponse<Cottage>>('/cottage/me/', updates);
     return response.data.results
   },
@@ -179,18 +195,18 @@ export const noteService = {
   },
 
   async addNote(classId: string, note: string): Promise<Note> {
-    const response = await api.post<ApiResponse<Note>>(`/notes/${classId}/add_note/`, {'note': note})
+    const response = await api.post<ApiResponse<Note>>(`/notes/${classId}/add_note/`, { 'note': note })
     return response.data.results
   },
 
   async deleteNote(classId: string, noteId: string): Promise<void> {
-    await api.post(`/notes/${classId}/delete_note/`, {'noteId': noteId})
+    await api.delete(`/notes/${classId}/delete_note/${noteId}/`)
   },
 
   async createNoteClass(name: string): Promise<Note> {
-    const response = await api.post<ApiResponse<Note>>(`/notes/`, {'noteClassName' : name})
+    const response = await api.post<ApiResponse<Note>>(`/notes/`, { 'noteClassName': name })
     return response.data.results
-    
+
   },
 
   async deleteNoteClass(classId: string): Promise<void> {

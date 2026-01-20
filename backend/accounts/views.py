@@ -1,31 +1,42 @@
-from rest_framework import viewsets, status, permissions, generics, status
-from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
+from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-
-from django.db.models import Count, Q
-from django.utils import timezone
-from django.http import HttpResponse
-from django.utils.timezone import now
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.middleware.csrf import get_token
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.conf import settings
-from django.core.mail import send_mail
-
-from datetime import timedelta
+from rest_framework.permissions import AllowAny
 
 from .models import CustomUser
 from .serializers import (
-    UserSerializer, PasswordChangeSerializer, LoginSerializer, PasswordResetRequestSerializer, SetNewPasswordSerializer
+    UserSerializer, PasswordChangeSerializer, LoginSerializer
 )
+
+from django.http import HttpResponse
+
+from django.utils.timezone import now
+
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from django.views.decorators.csrf import csrf_exempt
+
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+
+
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from rest_framework import generics, status
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from .serializers import PasswordResetRequestSerializer, SetNewPasswordSerializer
+from django.conf import settings
+from django.core.mail import send_mail
+
+
+
 
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -115,7 +126,7 @@ def signup(request):
 @permission_classes([AllowAny])
 class CustomObtainAuthToken(ObtainAuthToken):
     permission_classes = [AllowAny]
-
+    @csrf_exempt
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data,
                                      context={'request': request})
@@ -123,7 +134,7 @@ class CustomObtainAuthToken(ObtainAuthToken):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         user_serializer = UserSerializer(user)
-        #decide does user have cottage active
+        #decides id user has a active cotage instance
         if user.access_to_cottage:
             cottageInstanceActive = 'true'  
         else:
@@ -143,7 +154,7 @@ class CustomObtainAuthToken(ObtainAuthToken):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         user_serializer = UserSerializer(user)
-        #decide does user have cottage active
+        #decides id user has a active cotage instance
         if user.access_to_cottage:
             cottageInstanceActive = 'true'
         else:
@@ -158,9 +169,6 @@ class CustomObtainAuthToken(ObtainAuthToken):
 
 def csrf(request):
     return JsonResponse({'csrfToken': get_token(request)}, status=201)
-
-
-
 
 class RequestPasswordResetView(generics.GenericAPIView):
     serializer_class = PasswordResetRequestSerializer

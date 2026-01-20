@@ -36,10 +36,10 @@ stripePlans = {
             redirect=os.environ.get('STRIPE_REDIRECT'),
             cancel_url=os.environ.get('STRIPE_CANCEL_URL')
         ),
-        'Standard': StripePlan(
+        'Premium': StripePlan(
             priceId=os.environ.get('STRIPE_PREMIUM_PRICEID'),
             productId=os.environ.get('STRIPE_PREMIUM_PRODID'),
-            planName='Standard',
+            planName='Premium',
             redirect=os.environ.get('STRIPE_REDIRECT'),
             cancel_url=os.environ.get('STRIPE_CANCEL_URL')
         )

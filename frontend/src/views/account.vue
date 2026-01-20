@@ -155,11 +155,11 @@ export default defineComponent({
               Change cottage
             </router-link>
         </div>
-          <p class="text-secondary font-semibold flex">Name: <p class="pl-2 font-normal">{{ cottage.name }}</p></p>
-          <p class="text-secondary font-semibold flex">Address: <p class="pl-2 font-normal">{{ cottage.address }}</p></p>
-          <p class="text-secondary font-semibold flex">Owner: <p class="pl-2 font-normal">{{ cottage.ownerUsername }}</p></p>
-          <p class="text-secondary font-semibold flex">Subscription: <p class="pl-2 font-normal">{{ cottage.stripe_subscription }}</p></p>
-          <p class="text-secondary font-semibold flex">Subscription paid: <p class="pl-2 font-normal">{{ cottage.stripe_payment_status_int == 1 ? 'Yes' : 'No' }}</p></p>
+          <p class="text-secondary font-semibold flex">Name: <span class="pl-2 font-normal">{{ cottage.name }}</span></p>
+          <p class="text-secondary font-semibold flex">Address: <span class="pl-2 font-normal">{{ cottage.address }}</span></p>
+          <p class="text-secondary font-semibold flex">Owner: <span class="pl-2 font-normal">{{ cottage.ownerUsername }}</span></p>
+          <p class="text-secondary font-semibold flex">Subscription: <span class="pl-2 font-normal">{{ cottage.stripe_subscription }}</span></p>
+          <p class="text-secondary font-semibold flex">Subscription paid: <span class="pl-2 font-normal">{{ cottage.stripe_payment_status_int == 1 ? 'Yes' : 'No' }}</span></p>
           <div v-if="user.username == cottage.ownerUsername">
             <p class="text-secondary font-semibold flex">Invite members to cottage: <router-link 
               to="/invite-members-to-cottage" 

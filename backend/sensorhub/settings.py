@@ -1,6 +1,7 @@
 import os
 from decouple import config
 from pathlib import Path
+from celery.schedules import crontab
 
 BASE_DIR_STR = Path(__file__).resolve().parent.parent
 
@@ -13,24 +14,16 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='cottagepilot-production.up.railway.app', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 #STRIPE keys
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')  # Secret Key
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')  # Webhook Signing Secret
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "https://cottage-pilot.vercel.app",
-    'https://cottagepilot-production.up.railway.app',
-    'https://cottagepilot.fi'
-]
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://cottagepilot-production.up.railway.app',
-    'https://cottagepilot.fi',
-    'https://cottage-pilot.vercel.app'
-]
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=lambda v: [s.strip() for s in v.split(',')])
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -42,6 +35,7 @@ USE_TZ = True
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne', #ASQI server for channels
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,7 +54,8 @@ INSTALLED_APPS = [
     'cottageInstance',
     'calendarApp',
     'stripeApp',
-    'django_cron'
+    'django_cron',
+    'channels'
 ]
 
 CRON_CLASSES = [
@@ -105,18 +100,20 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'sensorhub.wsgi.application'
+ASGI_APPLICATION = 'sensorhub.asgi.application'
 
 
 # Database
 DATABASES = {
     'default': {
+        'CONN_MAX_AGE': 60,
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config("PGDATABASE"),
-        'USER': config("PGUSER"),
-        'PASSWORD': config('PGPASSWORD'),
-        'HOST': config('PGHOST'),
-        'PORT': config('PGPORT')
-    } 
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST', 'db'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+    }
 }
 
 DECIMAL_SEPARATOR = '.'
@@ -146,6 +143,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Use WhiteNoise for static files in production
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
 
 
 # Media files
@@ -209,15 +207,62 @@ LOGGING = {
 }
 
 
+# REDIS / CELERY CONFIGURATION
+REDIS_URL = config('REDIS_URL', default='redis://redis:6379/')
+
+# Channels configuration for WebSockets
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_URL], 
+        },
+    },
+}
+
+# MQTT Configuration
+MQTT_BROKER_HOST=os.getenv("MQTT_BROKER_HOST", "mqtt_broker")
+MQTT_PORT=os.getenv("MQTT_PORT", 1883)
+MQTT_USER=os.getenv("MQTT_USER", "")
+MQTT_PASSWORD=os.getenv("MQTT_PASSWORD", "")
+
+# Django Caching (Optional but recommended for speed)
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"{REDIS_URL}/1", # Using database 1 for cache
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
+# Celery Configuration
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    'process-sensor-data-every-30-seconds': {
+        'task': 'sensors.celery_tasks.process_sensor_queue',
+        'schedule': 30.0, # seconds
+    },
+}
+
+# Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'cottagepilot@gmail.com'
+EMAIL_HOST_USER = os.getenv('DEFAULT_FROM_EMAIL')
 EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')  # Use the App Password from Step 1
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+
 FRONTEND_URL = config('FRONTEND_url')  # where reset form is hosted
 
 # Create logs directory if it doesn't exist

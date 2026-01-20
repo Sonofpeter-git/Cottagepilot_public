@@ -73,7 +73,7 @@ const router = createRouter({
       path: '/dashboard/',
       name: 'Dashboard',
       component: HomeDashboard,
-      meta: { requiresAuth: true, isCottageRequired: true  }
+      meta: { requiresAuth: true, isCottageRequired: true }
     },
     {
       path: '/about/',
@@ -100,7 +100,7 @@ const router = createRouter({
       name: 'SensorData',
       component: SensorData,
       props: true,
-      meta: { requiresAuth: true, isCottageRequired: true  }
+      meta: { requiresAuth: true, isCottageRequired: true }
     },
     {
       path: '/sensor-dashboard/',
@@ -112,7 +112,7 @@ const router = createRouter({
       path: '/manage-sensors/',
       name: 'manage-sensors',
       component: ManageSensors,
-      meta: { requiresAuth: true, isCottageRequired: true  }
+      meta: { requiresAuth: true, isCottageRequired: true }
     },
     {
       path: '/contact/',
@@ -128,13 +128,13 @@ const router = createRouter({
       path: '/task-list/',
       name: 'task-list',
       component: TaskList,
-      meta: { requiresAuth: true, isCottageRequired: true  }
+      meta: { requiresAuth: true, isCottageRequired: true }
     },
     {
       path: '/task/:id/',
       name: 'taskDetails',
       component: TaskDetails,
-      meta: { requiresAuth: true, isCottageRequired: true  }
+      meta: { requiresAuth: true, isCottageRequired: true }
     },
     {
       path: '/account/',
@@ -146,19 +146,19 @@ const router = createRouter({
       path: '/notes/',
       name: 'notes',
       component: notekeeping,
-      meta: { requiresAuth: true, isCottageRequired: true  }
+      meta: { requiresAuth: true, isCottageRequired: true }
     },
     {
       path: '/calendar/',
       name: 'calendar',
       component: calendar,
-      meta: { requiresAuth: true, isCottageRequired: true  }
+      meta: { requiresAuth: true, isCottageRequired: true }
     },
     //Password_reset
     {
       path: '/forgot-password/',
       name: 'PasswordResetRequest',
-      component: PasswordResetRequest ,
+      component: PasswordResetRequest,
     },
     {
       path: '/reset-password/:uid/:token',
@@ -172,7 +172,7 @@ const router = createRouter({
       name: 'invite-members-to-cottage',
       component: inviteMembersToCottage,
     },
-    
+
     //Policies
     {
       path: '/privacy-policy/',

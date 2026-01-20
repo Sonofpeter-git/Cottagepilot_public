@@ -1,25 +1,25 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from stripeApp.views import make_stripe_checkout_session
 from rest_framework.response import Response
 from rest_framework import status
-
-from django.conf import settings
-from django.core.mail import send_mail
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-from django.db.models import Q
 
 #Models
 from .models import CottageInstanceModel
 from accounts.models import CustomUser
 
-#Serializers
 from .serializers import CottageSerializer, inviteMembers, cottageSubscriptionSerializer
 
-#Stripe
-from stripeApp.views import make_stripe_checkout_session
+from django.conf import settings
+from django.core.mail import send_mail
+
+
+
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.db.models import Q
 
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
@@ -88,7 +88,7 @@ def sendInvitation(request):
                 'Premium': 200
             }
             
-            userCounts = cottage.CottageUsers.count() + 2# +2  one is the owner is also a user and the second is the new user
+            userCounts = cottage.CottageUsers.count() + 2# +2  one is the owner which also a user and the second is the new user
             if userCounts > accountsPerCottagePlan[cottage.stripe_subscription]:
                 return Response({'status': 'failed', 'message': 'Cottage user limit reached. Please contact support to upgrade your plan.'}, status=status.HTTP_200_OK)
 

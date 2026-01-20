@@ -78,15 +78,32 @@ export const useNoteStore = defineStore('notes', () => {
     async function deleteNote(classId: string, noteId: string) {
         loading.value = true
         error.value = null
-        localStorage.setItem('notes', JSON.stringify(notes.value))
+
+        // Find noteclass
+        const noteClass = notes.value.find(n => n.id === classId)
+        if (!noteClass) return
+
+        // Backup for rollback
+        const originalNotes = JSON.parse(JSON.stringify(notes.value))
+
         try {
-        await noteService.deleteNote(classId, noteId)
+            // Check if it's actually an Array or an Object at runtime
+            if (Array.isArray(noteClass.notes)) {
+            // 1. Handle as Array
+            noteClass.notes = noteClass.notes.filter((n: any) => n.id !== noteId)
+            } else if (noteClass.notes && typeof noteClass.notes === 'object') {
+            // 2. Handle as Dictionary
+            delete (noteClass.notes as any)[noteId]
+            }
+
+            // Call API to delete note
+            await noteService.deleteNote(classId, noteId)
         } catch (err) {
-        error.value = err instanceof Error ? err.message : 'Failed to remove note'
-        console.error(err)
+            //Rollback if server fails
+            notes.value = originalNotes
+            error.value = err instanceof Error ? err.message : 'Failed to remove note'
         } finally {
-        loading.value = false
-        noteService.getNotes()
+            loading.value = false
         }
     }
 

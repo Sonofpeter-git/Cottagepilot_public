@@ -1,0 +1,31 @@
+# Stage 1: Build the frontend app
+FROM node:23-slim AS build
+
+WORKDIR /app
+
+# Copy package management files
+COPY package.json yarn.lock ./
+
+# Install dependencies (frozen-lockfile for consistency)
+RUN yarn install --frozen-lockfile
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the application
+RUN yarn build
+
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
+
+# Copy built assets from builder stage
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Note: We are using the default Nginx config here.
+# If you need SPA routing (try_files $uri /index.html), you should mount a config file
+# or Copy a custom nginx.conf if available in the frontend directory.
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

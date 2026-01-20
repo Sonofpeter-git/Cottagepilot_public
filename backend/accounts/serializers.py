@@ -15,10 +15,11 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        username = data.get('username').lower()  # Normalize to lowercase
+        username = data.get('username')  # Normalize to lowercase
         user = authenticate(username=username, password=data.get('password'))
         if not user:
             raise serializers.ValidationError("Invalid username or password")
+        print(user)
         data['user'] = user
         return data
 

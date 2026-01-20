@@ -1,23 +1,26 @@
 from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import AllowAny
 
-from django.db.models import Count, Q
-from django.utils import timezone
-from django.http import HttpResponse
-from django.http import JsonResponse
-
-from datetime import timedelta, datetime
 from .models import Reservation
 from tasks.models import Task
 from .serializers import (
     ReservationSerializer
 )
+from django.http import HttpResponse
+
+from django.http import JsonResponse
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from datetime import datetime
 
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -39,7 +42,7 @@ class CalendarViewSet(viewsets.ModelViewSet):
         #save
         newReservation = serializer.save(owner=request.user.access_to_cottage)
 
-        #create tasks required for ebery reserved week
+        #create tasks required for every reserved week
         descriptionSTR = "Remeber to clean. Function in progress to customize this text."
         end_str = serializer.data.get('end')  # this is a string like "2025-08-10T00:00:00Z"
 

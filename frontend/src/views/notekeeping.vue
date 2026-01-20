@@ -2,7 +2,7 @@
   <div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-4xl">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-secondary mb-3">Notekeeping</h1>
+        <h1 class="text-3xl font-bold text-secondary mb-3">Notes</h1>
         <p class="text-secondary">Write down information to remember later.</p>
       </div>
 
@@ -76,10 +76,13 @@
 </template>
 
 <script setup lang="ts">
-  import { reactive, ref, onMounted } from 'vue'
+  import { reactive, ref, onMounted, onUnmounted } from 'vue'
   import { useNoteStore } from '../stores/notes'
-import { Note } from '../types'
+  import { Note } from '../types'
+  import type { WSMessage} from '../types/websocket';
+  import { useAccountStore } from '../stores/account'
 
+  const accountStore = useAccountStore()
   const noteStore = useNoteStore()
   const newNote = reactive<Record<string, string>>({})
   const newClassName = ref<string>('')
@@ -114,10 +117,52 @@ import { Note } from '../types'
     await noteStore.deleteNote(classId, noteId)
   }
 
+  // 1. Separate reactive states for different data streams
+  let socket: WebSocket | null = null;
+
+  const handleMessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data) as WSMessage;
+
+      // 2. The Router: TypeScript now provides autocomplete for 'payload' 
+      // based on which 'case' you are in!
+      switch (data.type) {
+          case 'sensor_update':
+            break;
+              
+          case 'task_update':
+              break;
+
+          case 'note_update':
+              noteStore.fetchNotes();
+              break;  
+
+          default:
+              console.warn('Unknown message type received');
+      }
+  };
+
+  const connect = () => {
+
+      socket = new WebSocket(`wss://cloud.cottagepilot.fi/ws/unified/${accountStore.account?.access_to_cottage}/`);
+      console.log('WebSocket connected🚀 ' + accountStore.account?.access_to_cottage);
+      socket.onmessage = handleMessage;
+      socket.onclose = () => {
+          setTimeout(connect, 3000); // Reconnect logic
+      };
+  };
+
   onMounted(async () => {
+    await accountStore.fetchAccount()
     noteStore.getNotesFromLocalStorage()
     noteStore.fetchNotes()
     console.log(noteStore.notes)
+    connect()
+  })
+
+  onUnmounted(() => {
+    if (socket) {
+        socket.close();
+    }
   })
 </script>
 

@@ -1,31 +1,166 @@
+version: '3.8'
+
 services:
+  # 1 POSTGRESQL DATABASE
+  db:
+    image: postgres:15-alpine
+    container_name: cottage_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - ./backend/.local.env
+    networks:
+      - cottagepilot
+
+  # 2 DJANGO WEB SERVICE
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
+    command: daphne -b 0.0.0.0 -p 8000 sensorhub.asgi:application
     env_file:
-      - ./backend/.env
+      - ./backend/.local.env
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    environment:
-      - PYTHONUNBUFFERED=1
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_started
+    networks:
+      - cottagepilot
 
+  #3 REACT FRONTEND
   frontend:
     build:
       context: ./frontend
     volumes:
-      - ./frontend/style.css:/app/style.css
-      - ./frontend/tailwind.config.js:/app/tailwind.config.js
       - ./frontend/src/:/app/src/
+      - ./frontend/style.css:/app/style.css
     ports:
       - "8080:8080"
     depends_on:
       - backend
+    networks:
+      - cottagepilot
+
+
+  # 4 REDIS (For Celery Broker and Backend)
+  redis:
+    image: redis:7-alpine
+    container_name: cottage_redis
+    volumes:
+      - redis_data:/data
+    # Removed custom redis.conf requirement for simplicity
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cottagepilot
+
+  # 5 MQTT BROKER (FOR SENSOR DATA INGESTION)
+  mqtt_broker:
+    image: eclipse-mosquitto:2
+    container_name: cottage_mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001" # For WebSockets if needed later
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      - cottagepilot
+
+  # 6 CELERY WORKER (For Background Tasks)
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: celery -A sensorhub worker --loglevel=info
+    env_file:
+      - ./backend/.local.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - cottagepilot
+
+  # 7. CELERY BEAT (For Scheduled Tasks)
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: celery -A sensorhub beat --loglevel=info
+    env_file:
+      - ./backend/.local.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - cottagepilot
+
+  # 8. MQTT TO REDIS BRIDGE
+  mqtt_bridge:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: python mqtt_to_redis_bridge.py
+    env_file:
+      - ./backend/.local.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - mqtt_broker
+    networks:
+      - cottagepilot
+
+  # 9. CRON WORKER (For Running Cron Jobs)
+  cron_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: /bin/sh /app/run_crons_loop.sh
+    env_file:
+      - ./backend/.local.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+    networks:
+      - cottagepilot
+
+  # 10. SENSOR DATA SIMULATOR (For Testing and Development)
+  sensor_simulator:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    # Runs the specific script instead of the default Django server
+    command: python ./sensorhub/simulate_sensor.py
+    env_file:
+      - ./backend/.local.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - cottagepilot
+
 
 networks:
   cottagepilot:
 
 volumes:
   pgdata:
+  redis_data:
